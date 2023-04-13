@@ -1,0 +1,49 @@
+#include <Windows.h>
+#include <Cfgmgr32.h>
+
+int main()
+{
+    DEVINST devInst;
+    CONFIGRET cr;
+    ULONG status;
+
+    // Get the device instance handle for the driver you want to disable/enable
+    cr = CM_Locate_DevNode(&devInst, "YOUR_DEVICE_ID", CM_LOCATE_DEVNODE_NORMAL);
+
+    if (cr != CR_SUCCESS) {
+        printf("Error: Failed to locate device node (error code 0x%x)\n", cr);
+        return 1;
+    }
+
+    // Disable the driver
+    cr = CM_Get_DevNode_Status(&status, NULL, devInst, 0);
+    if (cr != CR_SUCCESS) {
+        printf("Error: Failed to get device node status (error code 0x%x)\n", cr);
+        return 1;
+    }
+
+    if (status & DN_STARTED) {
+        cr = CM_Set_DevNode_Status(devInst, DN_DISABLE, NULL, 0);
+        if (cr != CR_SUCCESS) {
+            printf("Error: Failed to disable device node (error code 0x%x)\n", cr);
+            return 1;
+        }
+    }
+
+    // Enable the driver
+    cr = CM_Get_DevNode_Status(&status, NULL, devInst, 0);
+    if (cr != CR_SUCCESS) {
+        printf("Error: Failed to get device node status (error code 0x%x)\n", cr);
+        return 1;
+    }
+
+    if (!(status & DN_STARTED)) {
+        cr = CM_Set_DevNode_Status(devInst, DN_START, NULL, 0);
+        if (cr != CR_SUCCESS) {
+            printf("Error: Failed to enable device node (error code 0x%x)\n", cr);
+            return 1;
+        }
+    }
+
+    return 0;
+}
